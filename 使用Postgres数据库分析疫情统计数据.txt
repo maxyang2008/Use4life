@@ -1,0 +1,304 @@
+## 建表
+
+psql -U postgres -h 10.20.30.42 -d postgres -p15432
+
+\c sbtest
+
+CREATE TABLE IF NOT EXISTS public."mingxi-20210626"
+(
+seq text ,
+submit_date text,
+xiaoqu text,
+menpai text,
+xingming text,
+dianhua text,
+nianling text,
+shifoujiezhong text,
+jiezhongqingkuang text,
+chengyuan1 text,
+chengyuan2 text,
+chengyuan3 text,
+chengyuan4 text,
+chengyuan5 text
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public."mingxi-20210626"
+    OWNER to postgres;
+
+## 将excel导出成csv文件，去掉不需要的列
+
+
+## 将csv文件导入到表
+\copy public."mingxi-20210626" (seq, submit_date, xiaoqu, menpai, xingming, dianhua, nianling, shifoujiezhong, jiezhongqingkuang, chengyuan1, chengyuan2, chengyuan3, chengyuan4, chengyuan5) FROM 'C:\\Users\\maxwell\\Desktop\\temp\\122446388.csv' DELIMITER ',' CSV ENCODING 'GBK' HEADER;
+
+
+## 执行sql分析
+
+-- 已接种户数
+SELECT xiaoqu, count(*)
+FROM public."mingxi-20210626"
+where 1=1
+and xiaoqu like '水岸东方%'
+and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	)
+	group by xiaoqu
+	order by 1
+	;
+
+
+-- 应接种人数
+select 
+t1.xiaoqu,
+sum(t1.tianbiaorenqingkuang + t1.chengyuanqingkuang1 + t1.chengyuanqingkuang2 + t1.chengyuanqingkuang3 + t1.chengyuanqingkuang4 + t1.chengyuanqingkuang5)
+from (
+SELECT 
+t.seq,
+t.xiaoqu,
+t.menpai,
+t.xingming,
+t.dianhua,
+t.shifoujiezhong,
+t.jiezhongqingkuang,
+CASE WHEN shifoujiezhong not like '%18岁%'
+     then 1
+	 else 0 END as tianbiaorenqingkuang,
+CASE WHEN chengyuan1 like '%未接种%' or chengyuan1 like '%禁忌%' or chengyuan1 like '%第一针%' or chengyuan1 like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang1,	
+CASE WHEN chengyuan2 like '%未接种%' or chengyuan2 like '%禁忌%' or chengyuan2 like '%第一针%' or chengyuan2 like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang2,	 	 
+CASE WHEN chengyuan3 like '%未接种%' or chengyuan3 like '%禁忌%' or chengyuan3 like '%第一针%' or chengyuan3 like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang3,	 	 
+CASE WHEN chengyuan4 like '%未接种%' or chengyuan4 like '%禁忌%' or chengyuan4 like '%第一针%' or chengyuan4 like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang4,	 
+CASE WHEN chengyuan5 like '%未接种%' or chengyuan5 like '%禁忌%' or chengyuan5 like '%第一针%' or chengyuan5 like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang5	 
+FROM public."mingxi-20210626" t
+where 1=1
+--and xiaoqu like '水岸东方%'
+and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	)
+--	group by xiaoqu
+--	order by 1
+) as t1
+group by t1.xiaoqu
+order by 1;
+
+
+
+-- 已接种人数
+select 
+t1.xiaoqu,
+sum(t1.tianbiaorenqingkuang + t1.chengyuanqingkuang1 + t1.chengyuanqingkuang2 + t1.chengyuanqingkuang3 + t1.chengyuanqingkuang4 + t1.chengyuanqingkuang5)
+from (
+SELECT 
+t.seq,
+t.xiaoqu,
+t.menpai,
+t.xingming,
+t.dianhua,
+t.shifoujiezhong,
+t.jiezhongqingkuang,
+CASE WHEN jiezhongqingkuang  like '%北京%' or jiezhongqingkuang  like '%兰州%' or jiezhongqingkuang like '%安徽%'
+     then 1
+	 else 0 END as tianbiaorenqingkuang,
+CASE WHEN chengyuan1  like '%北京%' or chengyuan1  like '%兰州%' or chengyuan1 like '%安徽%'
+     then 1
+	 else 0 END as chengyuanqingkuang1,	
+CASE WHEN chengyuan2  like '%北京%' or chengyuan2  like '%兰州%' or chengyuan2 like '%安徽%'
+     then 1
+	 else 0 END as chengyuanqingkuang2,	 	 
+CASE WHEN chengyuan3  like '%北京%' or chengyuan3  like '%兰州%' or chengyuan3 like '%安徽%'
+     then 1
+	 else 0 END as chengyuanqingkuang3,	 	 
+CASE WHEN chengyuan4  like '%北京%' or chengyuan4  like '%兰州%' or chengyuan4 like '%安徽%'
+     then 1
+	 else 0 END as chengyuanqingkuang4,	 
+CASE WHEN chengyuan5  like '%北京%' or chengyuan5  like '%兰州%' or chengyuan5 like '%安徽%'
+     then 1
+	 else 0 END as chengyuanqingkuang5	 
+FROM public."mingxi-20210626" t
+where 1=1
+--and xiaoqu like '水岸东方%'
+and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	)
+--	group by xiaoqu
+--	order by 1
+) as t1
+group by t1.xiaoqu
+order by 1;
+
+
+
+-- 禁忌症人数
+select 
+t1.xiaoqu,
+sum(t1.tianbiaorenjinji + t1.chengyuanjingji1 + t1.chengyuanjingji2 + t1.chengyuanjingji3 + t1.chengyuanjingji4 + t1.chengyuanjingji5)
+from (
+SELECT 
+t.seq,
+t.xiaoqu,
+t.menpai,
+t.xingming,
+t.dianhua,
+t.shifoujiezhong,
+t.jiezhongqingkuang,
+CASE WHEN shifoujiezhong like '%禁忌症%' 
+     then 1
+	 else 0 END as tianbiaorenjinji,
+CASE WHEN chengyuan1  like '%禁忌症%'
+     then 1
+	 else 0 END as chengyuanjingji1,	
+CASE WHEN chengyuan2  like '%禁忌症%'
+     then 1
+	 else 0 END as chengyuanjingji2,	 	 
+CASE WHEN chengyuan3  like '%禁忌症%'
+     then 1
+	 else 0 END as chengyuanjingji3,	 	 
+CASE WHEN chengyuan4  like '%禁忌症%'
+     then 1
+	 else 0 END as chengyuanjingji4,	 
+CASE WHEN chengyuan5  like '%禁忌症%'
+     then 1
+	 else 0 END as chengyuanjingji5	 
+FROM public."mingxi-20210626" t
+where 1=1
+--and xiaoqu like '水岸东方%'
+--and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+--     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+--	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+--	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+--	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+--	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+--	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	--)
+--	group by xiaoqu
+--	order by 1
+) as t1
+group by t1.xiaoqu
+order by 1;
+
+
+
+
+-- 仅接种第一针
+select 
+t1.xiaoqu,
+sum(t1.tianbiaorenqingkuang + t1.chengyuanqingkuang1 + t1.chengyuanqingkuang2 + t1.chengyuanqingkuang3 + t1.chengyuanqingkuang4 + t1.chengyuanqingkuang5)
+from (
+SELECT 
+t.seq,
+t.xiaoqu,
+t.menpai,
+t.xingming,
+t.dianhua,
+t.shifoujiezhong,
+t.jiezhongqingkuang,
+CASE WHEN jiezhongqingkuang  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as tianbiaorenqingkuang,
+CASE WHEN chengyuan1  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang1,	
+CASE WHEN chengyuan2  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang2,	 	 
+CASE WHEN chengyuan3  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang3,	 	 
+CASE WHEN chengyuan4  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang4,	 
+CASE WHEN chengyuan5  like '%第一针%' and jiezhongqingkuang  not like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang5	 
+FROM public."mingxi-20210626" t
+where 1=1
+--and xiaoqu like '水岸东方%'
+and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	)
+--	group by xiaoqu
+--	order by 1
+) as t1
+group by t1.xiaoqu
+order by 1;
+
+
+
+-- 接种第二针
+select 
+t1.xiaoqu,
+sum(t1.tianbiaorenqingkuang + t1.chengyuanqingkuang1 + t1.chengyuanqingkuang2 + t1.chengyuanqingkuang3 + t1.chengyuanqingkuang4 + t1.chengyuanqingkuang5)
+from (
+SELECT 
+t.seq,
+t.xiaoqu,
+t.menpai,
+t.xingming,
+t.dianhua,
+t.shifoujiezhong,
+t.jiezhongqingkuang,
+CASE WHEN jiezhongqingkuang  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as tianbiaorenqingkuang,
+CASE WHEN chengyuan1  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang1,	
+CASE WHEN chengyuan2  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang2,	 	 
+CASE WHEN chengyuan3  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang3,	 	 
+CASE WHEN chengyuan4  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang4,	 
+CASE WHEN chengyuan5  like '%第一针%' and jiezhongqingkuang   like '%第二针%'
+     then 1
+	 else 0 END as chengyuanqingkuang5	 
+FROM public."mingxi-20210626" t
+where 1=1
+--and xiaoqu like '水岸东方%'
+and ( jiezhongqingkuang not like '%未接种%' or jiezhongqingkuang not like '%禁忌%'
+     or shifoujiezhong not like '%未接种%' or shifoujiezhong not like '%空%' or shifoujiezhong not like '%禁忌%'
+	 or chengyuan1 not like '%未接种%' or chengyuan1 not like '%空%' or chengyuan1 not like '%禁忌%' 
+	 or chengyuan2 not like '%未接种%' or chengyuan2 not like '%空%' or chengyuan2 not like '%禁忌%' 
+	 or chengyuan3 not like '%未接种%' or chengyuan3 not like '%空%' or chengyuan3 not like '%禁忌%' 
+	 or chengyuan4 not like '%未接种%' or chengyuan4 not like '%空%' or chengyuan4 not like '%禁忌%' 
+	 or chengyuan5 not like '%未接种%' or chengyuan5 not like '%空%' or chengyuan5 not like '%禁忌%' 
+	)
+--	group by xiaoqu
+--	order by 1
+) as t1
+group by t1.xiaoqu
+order by 1;
+
